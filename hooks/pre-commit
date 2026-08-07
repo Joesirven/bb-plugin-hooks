@@ -1,0 +1,35 @@
+#!/bin/sh
+set -eu
+
+hook_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+validator="$hook_dir/validate_frontmatter.py"
+
+if [ ! -x "$validator" ]; then
+  echo "Frontmatter validator is not executable: $validator" >&2
+  exit 1
+fi
+
+"$validator"
+
+git_dir=$(git rev-parse --git-dir 2>/dev/null || printf '')
+if [ -n "$git_dir" ]; then
+  previous_hooks_path=$(git config --get bb-hooks.previousHooksPath 2>/dev/null || printf '')
+  if [ -n "$previous_hooks_path" ]; then
+    case "$previous_hooks_path" in
+      /*) previous_pre_commit="$previous_hooks_path/pre-commit" ;;
+      *) previous_pre_commit="$(pwd)/$previous_hooks_path/pre-commit" ;;
+    esac
+    if [ -x "$previous_pre_commit" ]; then
+      "$previous_pre_commit"
+    fi
+  fi
+
+  local_hook="$git_dir/hooks/pre-commit"
+  if [ -x "$local_hook" ]; then
+    local_real=$(realpath "$local_hook" 2>/dev/null || printf '%s\n' "$local_hook")
+    self_real=$(realpath "$0" 2>/dev/null || printf '%s\n' "$0")
+    if [ "$local_real" != "$self_real" ]; then
+      "$local_hook"
+    fi
+  fi
+fi

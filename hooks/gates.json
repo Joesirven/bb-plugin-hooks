@@ -1,0 +1,8 @@
+[
+  {
+    "name": "frontmatter",
+    "fileGlob": "**/*.md",
+    "command": "./validate_frontmatter.py",
+    "description": "Markdown files must carry valid required frontmatter fields."
+  }
+]
