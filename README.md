@@ -6,6 +6,24 @@ The plugin owns a tracked hook directory at `hooks/`. Repositories can point
 `core.hooksPath` at that directory without depending on temporary migration
 checkouts.
 
+## How it works
+
+```mermaid
+flowchart LR
+    C["git commit<br/>staged files"] --> PC["hooks/pre-commit<br/>core.hooksPath points at<br/>the tracked hooks directory"]
+    PC --> G{"Named gates<br/>file glob + checker<br/>or command"}
+    G --> F["frontmatter gate<br/>validate_frontmatter.py"]
+    F -->|"fail"| B["Commit blocked<br/>path: message per failure"]
+    F -->|"pass"| OK["Commit proceeds<br/>preserved hooks chained"]
+    W["Watcher over watchRoots<br/>outside commits"] -->|"current failing files"| AI["Agent instructions<br/>list what is failing"]
+
+    classDef core fill:#005032,stroke:#0D1016,color:#FAFAF9
+    classDef store fill:#0D1016,stroke:#005032,color:#FAFAF9
+    classDef guard fill:#F5C518,stroke:#0D1016,color:#0D1016
+    class C,PC,F,OK core
+    class G,B,W,AI guard
+```
+
 ## Design
 
 - Gates are named validators with a file glob and either a built-in checker or
